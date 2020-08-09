@@ -44,7 +44,6 @@
                 this.$refs.tree2.filter(val)
             }
         },
-
         methods: {
 
             getAllSubjectList() {
