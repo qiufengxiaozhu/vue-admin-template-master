@@ -96,6 +96,49 @@ export const constantRouterMap = [
     ]
   },
 
+  { // 课程信息的路由配置
+    path: '/course',
+    component: Layout,
+    redirect: '/course/list',
+    name: '课程信息', // 一级目录
+    meta: { title: '课程信息', icon: 'example' },
+    children: [
+        {
+            path: 'list',
+            name: '课程信息列表', // 二级目录
+            component: () => import('@/views/edu/course/list'), // @符号相当于src目录,后缀名是vue，省略不写
+            meta: { title: '课程信息列表', icon: 'table' }
+            },
+            {
+            path: 'info',
+            name: '添加课程信息', // 二级目录
+            component: () => import('@/views/edu/course/info'),
+            meta: { title: '添加课程信息', icon: 'tree', noCache: true }
+        },
+        {
+            path: 'info/:id',
+            name: '编辑课程信息',
+            component: () => import('@/views/edu/course/info'),
+            meta: { title: '编辑课程信息', noCache: true },
+            hidden: true    //隐藏路由，做页面跳转
+        },
+        {
+            path: 'chapter/:id',
+            name: '编辑课程大纲',
+            component: () => import('@/views/edu/course/chapter'),
+            meta: { title: '编辑课程大纲', noCache: true },
+            hidden: true    //隐藏路由，做页面跳转
+        },
+        {
+            path: 'publish/:id',
+            name: '课程信息发布',
+            component: () => import('@/views/edu/course/publish'),
+            meta: { title: '课程信息发布', noCache: true },
+            hidden: true    //隐藏路由，做页面跳转
+        }
+    ]
+  },
+
   {
     path: '/example',
     component: Layout,
