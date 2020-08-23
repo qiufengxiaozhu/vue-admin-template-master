@@ -66,9 +66,9 @@
                 <el-input-number :min="0" v-model="courseInfo.lessonNum" controls-position="right" placeholder="请填写课程的总课时数"/>
             </el-form-item>
 
-            <!-- 课程简介 -->
+            <!-- 课程简介-->
             <el-form-item label="课程简介">
-                <el-input v-model="courseInfo.description" placeholder="课程简介"/>
+                <tinymce :height="300" v-model="courseInfo.description"/>
             </el-form-item>
 
             <!-- 课程封面 -->
@@ -114,8 +114,12 @@
 
     import course from "@/api/edu/course";
     import subject from "@/api/edu/subject";
+    import Tinymce from "@/components/Tinymce"; // 引入富文本
 
     export default {
+
+        // 引入富文本组件
+        components: { Tinymce },
 
         data() {
 
@@ -137,37 +141,67 @@
                 teacherList: [],        // 用于封装所有的讲师
                 oneSubjectList: [],     // 用于封装所有的 一级分类
                 twoSubjectList: [],     // 用于封装所有的 二级分类
-                BASE_API: process.env.BASE_API  // 获取dev.env.js里面地址
+                BASE_API: process.env.BASE_API,  // 获取dev.env.js里面地址
+                courseId: ''            // 路由中的课程id
             }
         },
         created() {
 
-            // 初始化所有讲师
-            this.getTeacherList();
+            this.init();
+        },
+        watch: {  // 路由监听
 
-            // 初始化一级分类
-            this.getOneSubjectList();
+            $route(to, from) {  // 当路由发生变化，这个方法就会执行
+
+                console.log('watch $route');
+                this.init();
+            }
         },
         methods: {
+
+            // 初始化
+            init() {
+
+                // 修改课程信息操作
+                // 1、获取路由中的课程id   如果路由中有参数，且存在参数为id
+                if (this.$route.params && this.$route.params.id) {
+
+                    this.courseId = this.$route.params.id;
+
+                    // 2、调用根据id查询课程的方法
+                    this.getCourseInfo();
+
+                    // 3、初始化所有讲师
+                    this.getTeacherList();
+                }
+                // 新增课程信息操作
+                else {
+
+                    // this.courseInfo = {};
+
+                    // 2、初始化所有讲师
+                    this.getTeacherList();
+
+                    // 3、初始化一级分类
+                    this.getOneSubjectList();
+
+                }
+            },
 
             // 添加或修改课程信息
             saveOrUpdate() {
 
-                course.addCourseInfo(this.courseInfo)
-                    .then(response =>{
+                // 根据条件判断是执行 新增信息方法 还是 修改信息方法
+                if (this.courseId) {
 
-                        // 提示信息,弹出一个提示框
-                        this.$message({
-                            type: 'success',
-                            message: '添加课程信息成功!'
-                        });
+                    // 执行修改信息方法
+                    this.updateCourse();
+                }
+                else {
 
-                        // 从 response 中获取到课程id
-                        let courseId = response.data.courseId;
-
-                        // 点击下一步跳转到第二步     路由跳转(重定向)
-                        this.$router.push({path: "/course/chapter/"+ courseId });
-                    })
+                    // 执行新增信息方法
+                    this.addCourse();
+                }
 
             },
 
@@ -243,11 +277,93 @@
                     this.$message.error('上传课程封面图片大小不能超过 2MB!');
                 }
                 return isJPG && isLt2M;
+            },
+
+            // 根据课程id查询信息
+            getCourseInfo() {
+
+                course.getCourseInfo(this.courseId)
+                    .then(response =>{
+
+                         // courseInfo 中会有课程相关的信息
+                        this.courseInfo = response.data.courseInfo;
+
+                        // 目前，是 oneSubjectList 数组中有值，但是 twoSubjectList 中没有值，所有下拉列表中只会显示id值
+                        // 解决方法
+                        // 1、先查询出所有的一级二级分类（这个方法是查询出所有的一级分类一级二级分类的方法）
+                        subject.getSubjectList()
+                            .then(response =>{
+
+                                // 2、获取所有的一级分类
+                                this.oneSubjectList = response.data.list;
+
+                                //3 把所有的一级分类数组进行遍历，比较当前courseInfo里面的一级分类id和所有的一级分类id
+                                // 相同的话，取出其中的二级分类id进行回显
+                                for (let i = 0; i < this.oneSubjectList.length; i++) {
+
+                                    // 在一级分类数组中取出每一个一级分类
+                                    let oneSubject = this.oneSubjectList[i];
+
+                                    // 比较当前courseInfo里面一级分类id和所有的一级分类id
+                                    // courseInfo 中只有根据id查出来的已经选择好的一级分类一级二级分类
+                                    if(this.courseInfo.subjectParentId == oneSubject.id) {
+
+                                        //获取该一级分类所有的二级分类
+                                        this.twoSubjectList = oneSubject.children;
+                                    }
+                                }
+
+                            })
+                    })
+            },
+
+            // 新增课程信息方法
+            addCourse() {
+
+                course.addCourseInfo(this.courseInfo)
+                    .then(response =>{
+
+                        // 提示信息,弹出一个提示框
+                        this.$message({
+                            type: 'success',
+                            message: '添加课程信息成功!'
+                        });
+
+                        // 从 response 中获取到课程id
+                        let courseId = response.data.courseId;
+
+                        // 点击下一步跳转到第二步     路由跳转(重定向)
+                        this.$router.push({path: "/course/chapter/"+ courseId });
+                    })
+            },
+
+            // 修改课程信息的方法
+            updateCourse() {
+
+                course.updateCourseInfo(this.courseInfo)
+                    .then(response =>{
+
+                        // 提示信息,弹出一个提示框
+                        this.$message({
+                            type: 'success',
+                            message: '修改课程信息成功!'
+                        });
+
+                        // 点击下一步跳转到第二步     路由跳转(重定向)
+                        this.$router.push({path: "/course/chapter/"+ this.courseId });
+                    })
             }
         }
     }
 </script>
 
 <style scoped>
+
+    /*富文本样式
+      scoped 表示这个样式只对当前页面有效
+    */
+    .tinymce-container {
+        line-height: 29px;
+    }
 
 </style>
