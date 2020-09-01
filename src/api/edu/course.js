@@ -32,6 +32,7 @@ export default {
             method: 'get'
         })
     },
+
     // 修改课程信息
     updateCourseInfo(courseInfo) {
 
@@ -40,6 +41,47 @@ export default {
             url: '/edu/course/updateCourseInfo',
             method: 'post',
             data: courseInfo
+        })
+    },
+
+    // 课程发布信息显示
+    getPublishCourseInfo(courseId) {
+
+        return request({
+
+            url: `/edu/course/getPublishCourseInfo/${courseId}`,
+            method: 'get'
+        })
+    },
+
+    // 课程最终发布
+    submitPublishCourse(courseId) {
+
+        return request({
+
+            url: `/edu/course/publishCourse/${courseId}`,
+            method: 'post'
+        })
+    },
+
+    // 课程列表查询（不附加条件，分页查询所有）
+    selectCourseByPage(current, limit) {
+
+        return request({
+
+            url: `/edu/course/pageCourse/${current}/${limit}`,
+            method: 'post'
+        })
+    },
+
+    // 课程列表查询（【附加】条件，分页查询所有）
+    selectCourseByCondition(current, limit, courseQuery) {
+
+        return request({
+
+            url: `/edu/course/pageCourseCondition/${current}/${limit}`,
+            method: 'post',
+            data: courseQuery
         })
     }
 }

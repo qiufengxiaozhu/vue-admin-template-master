@@ -1,0 +1,9 @@
+
+
+info        课程信息
+
+chapter     课程大纲
+
+publish     课程发布
+
+list        课程列表
