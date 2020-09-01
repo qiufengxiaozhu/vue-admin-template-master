@@ -25,21 +25,21 @@
                         {{ chapter.title }}
 
                         <span class="acts">
-                            <el-button type="text" @click="addVideo(chapter.id)">添加小节</el-button>
+                            <el-button type="text" @click="openVideoDialog(chapter.id)">添加小节</el-button>
                             <el-button type="text" @click="editChapter(chapter.id)">编辑</el-button>
                             <el-button type="text" @click="removeChapter(chapter.id)">删除</el-button>
                         </span>
                     </p>
 
-                    <!-- 视频 -->
+                    <!-- 小节--视频 -->
                     <ul class="chanpterList videoList">
                         <li
                             v-for="video in chapter.children"
                             :key="video.id">
                             <p>{{ video.title }}
                                 <span class="acts">
-                                    <el-button type="text">编辑</el-button>
-                                    <el-button type="text">删除</el-button>
+                                    <el-button type="text" @click="editVideo(video.id)">编辑</el-button>
+                                    <el-button type="text" @click="removeVideo(video.id)">删除</el-button>
                                 </span>
                             </p>
                         </li>
@@ -83,7 +83,7 @@
                     <el-input-number v-model="video.sort" :min="0" controls-position="right"/>
                 </el-form-item>
                 <el-form-item label="是否免费">
-                    <el-radio-group v-model="video.free">
+                    <el-radio-group v-model="video.isFree">
                         <el-radio :label="true">免费</el-radio>
                         <el-radio :label="false">默认</el-radio>
                     </el-radio-group>
@@ -104,6 +104,7 @@
 <script>
 
     import chapter from "@/api/edu/chapter";
+    import video from "@/api/edu/video";
 
     export default {
 
@@ -125,7 +126,7 @@
                 video: {                // 用于封装小节的数据
                     title: '',          // 章节名称
                     sort: 0,            // 排序
-                    free: 0,            // 是否免费
+                    isFree: 0,            // 是否免费
                     videoSourceId: ''   // 小节的视频资源
                 }
             }
@@ -190,7 +191,7 @@
                 // 弹出弹框
                 this.dialogChapterFormVisible = true;
 
-                // 情况表单数据
+                // 清空表单数据
                 this.chapter = {};
             },
 
@@ -264,7 +265,7 @@
                             // 提示信息,弹出一个提示框
                             this.$message({
                                 type: 'success',
-                                message: '删除成功!'
+                                message: '删除章节成功!'
                             });
 
                             // 刷新页面
@@ -287,15 +288,128 @@
 
             /*========================================【小节操作】 -- start =====================================*/
 
-            // 添加小节
-            addVideo(chapterId) {
+            // 弹出添加小节的模态框
+            openVideoDialog(chapterId) {
 
                 // 弹出弹框
                 this.dialogVideoFormVisible = true;
+
+                // 清空表单数据
+                this.video = {};
+
+                // 设置章节id
+                this.video.chapterId = chapterId;
+            },
+
+            // 添加或修改小节
+            saveOrUpdateVideo() {
+
+                // 判断，如果数据中有 id，则为修改方法，没有id，调用添加方法
+                if (this.video.id) {
+                    // 修改小节的方法
+                    this.updateVideo();
+                }
+                else {
+                    // 添加小节的方法
+                    this.addVideo();
+                }
+            },
+
+            // 添加小节
+            addVideo() {
+
+                // 设置课程id
+                this.video.courseId = this.courseId;
+
+                // 添加小节
+                video.addVideo(this.video)
+                    .then(response => {
+
+                        // 关闭弹框
+                        this.dialogVideoFormVisible = false;    // 初始化模态框是否可见 （添加小节的弹框）
+
+                        // 提示信息,弹出一个提示框
+                        this.$message({
+                            type: 'success',
+                            message: '添加小节成功!'
+                        });
+
+                        // 刷新页面
+                        this.getChapterAndVideo();
+                    })
+            },
+
+            // 根据id回显小节数据，并做修改
+            editVideo(videoId) {
+
+                console.log("videoId：" + videoId);
+
+                // 打开弹框
+                this.dialogVideoFormVisible = true;    // 初始化模态框是否可见 （添加小节的弹框）
+
+                video.getVideoInfo(videoId)
+                    .then(response => {
+
+                        this.video = response.data.video;
+
+                        console.log(this.video);
+                    })
+            },
+
+            // 修改小节
+            updateVideo() {
+
+                video.updateVideo(this.video)
+                    .then(response => {
+
+                        // 关闭弹框
+                        this.dialogVideoFormVisible = false;    // 初始化模态框是否可见 （添加小节的弹框）
+
+                        // 提示信息,弹出一个提示框
+                        this.$message({
+                            type: 'success',
+                            message: '修改小节信息成功!'
+                        });
+
+                        // 刷新页面
+                        this.getChapterAndVideo();
+                    })
+            },
+
+            // 删除小节
+            removeVideo(videoId) {
+
+                this.$confirm('此操作将永久删除该小节信息, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {   // 点击了确认删除按钮
+
+                    video.deleteVideo(videoId)
+                        .then(response => {  // 删除成功
+
+                            // 提示信息,弹出一个提示框
+                            this.$message({
+                                type: 'success',
+                                message: '删除小节成功!'
+                            });
+
+                            // 刷新页面
+                            this.getChapterAndVideo();
+
+                        })
+                        .catch(error =>{  // 删除失败   注意：框架已经是自己封装了catch，所以以后可以不用自己再定义catch，避免发生同时执行两个catch
+
+                            alert("删除失败："+error);
+                        })
+
+                }).catch(() => {  // 点击了取消删除按钮
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
             }
-
-
-
             /*========================================【小节操作】 --  end  =====================================*/
 
         }
@@ -332,7 +446,7 @@
         padding-left: 50px;
     }
     .videoList p{
-        float: left;
+        /*float: left;*/
         font-size: 14px;
         margin: 10px 0;
         padding: 10px;
