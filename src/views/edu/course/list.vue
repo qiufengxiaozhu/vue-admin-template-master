@@ -11,8 +11,8 @@
 
             <el-form-item>
                 <el-select v-model="courseQuery.status" clearable placeholder="课程状态">
-                    <el-option :value="Normal" label="已发布"/>
-                    <el-option :value="Draft" label="未发布"/>
+                    <el-option value="Normal" label="已发布"/>
+                    <el-option value="Draft" label="未发布"/>
                 </el-select>
             </el-form-item>
 
@@ -160,6 +160,53 @@
                         console.log(error);
                     })
             },
+
+            // 清空查询条件
+            resetData() {
+
+                // 1、清空表单数据, 将对象置为空即可，因为是双向绑定
+                this.courseQuery = {};
+
+                // 2、查询所有数据，调用之前的方法
+                this.getList();
+            },
+
+            // 删除课程信息
+            removeDataById(id) {
+
+                this.$confirm('此操作将永久删除课程信息, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {   // 点击了确认删除按钮
+
+                    course.deleteCourseInfo(id)
+                        .then(response =>{  // 删除成功
+
+                            // 提示信息,弹出一个提示框
+                            this.$message({
+                                type: 'success',
+                                message: '删除成功!'
+                            });
+
+                            // 刷新数据
+                            this.getList();
+
+                        })
+                        .catch(error =>{  // 删除失败   注意：框架已经是自己封装了catch，所以以后可以不用自己再定义catch，避免发生同时执行两个catch
+
+                            alert("删除失败："+error);
+                        })
+
+                }).catch(() => {  // 点击了取消删除按钮
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            },
+
+
         }
     }
 </script>

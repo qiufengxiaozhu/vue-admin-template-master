@@ -83,5 +83,15 @@ export default {
             method: 'post',
             data: courseQuery
         })
+    },
+
+    // 删除课程信息
+    deleteCourseInfo(courseId) {
+
+        return request({
+
+            url: `/edu/course/${courseId}`,
+            method: 'delete'
+        })
     }
 }
