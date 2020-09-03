@@ -102,7 +102,6 @@
             @current-change="getList"
         />
 
-
     </div>
 </template>
 
@@ -204,12 +203,11 @@
                 }).catch(() => {  // 点击了取消删除按钮
                     this.$message({
                         type: 'info',
-                        message: '已取消删除'
+                        message: '已取消删除！'
                     });
                 });
 
             }
-
         }
     }
 </script>
